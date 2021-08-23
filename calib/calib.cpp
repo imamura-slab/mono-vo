@@ -9,7 +9,7 @@
 
 using namespace std;
 
-#define IMAGE_NUM  (10)         /* 画像数 */
+#define IMAGE_NUM  (79)         /* 画像数 */
 #define PAT_ROW    (7)          /* パターンの行数 */
 #define PAT_COL    (10)         /* パターンの列数 */
 #define PAT_SIZE   (PAT_ROW*PAT_COL)
@@ -28,10 +28,10 @@ int main(int argc, char *argv[])
   vector<vector<cv::Point2f>> img_points;
 
   // (1)キャリブレーション画像の読み込み
-  for (i = 0; i < IMAGE_NUM; i++)
+  for (i = 1; i <= IMAGE_NUM; i++)
     {
       ostringstream ostr;
-      ostr << "calib_img\\" << setfill('0') << setw(2) << i << ".png";
+      ostr << "calib_img/view_" << setfill('0') << setw(8) << i << ".png";
       cv::Mat src = cv::imread(ostr.str());
       if (src.empty())
         {

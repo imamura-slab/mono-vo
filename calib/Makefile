@@ -1,4 +1,5 @@
-TARGET := calib
+#TARGET := calib
+TARGET := calc_focal
 VER    := -std=c++11
 LIB    := `pkg-config --cflags opencv` `pkg-config --libs opencv`
 OPTION := -O2
