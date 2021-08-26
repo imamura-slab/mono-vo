@@ -4,7 +4,7 @@ using namespace cv;
 using namespace std;
 
 #define MAX_FRAME 150
-#define MIN_NUM_FEAT 10
+//#define MIN_NUM_FEAT 10
 
 
 int main( int argc, char** argv ){
@@ -14,7 +14,7 @@ int main( int argc, char** argv ){
   ofstream myfile;
   myfile.open("results1_1.txt");
 
-  double scale = 1.00;
+  double scale = 10.00;
   char filename1[200];
   char filename2[200];
 
@@ -36,6 +36,7 @@ int main( int argc, char** argv ){
   }
 
   int miss_cnt=0;
+  int lessthan5=0;
 
   
   // we work with grayscale images
@@ -56,6 +57,7 @@ int main( int argc, char** argv ){
 
   cout << "-------------------------------\n";
   cout << points1.size() << ", " << points2.size() << endl;
+
   
   // KITTI
   // double focal = 718.8560;
@@ -97,28 +99,43 @@ int main( int argc, char** argv ){
     Mat currImage_c = imread(filename);
     cvtColor(currImage_c, currImage, COLOR_BGR2GRAY);
     tie(key1, key2, match) = feature_matching(prevImage, currImage);
-    tie(points1, points2) = sort_feature(key1, key2, match);
+    tie(prevFeatures, currFeatures) = sort_feature(key1, key2, match);
     // KeyPoint::convert(key1, prevFeatures, vector<int>());
     // KeyPoint::convert(key2, currFeatures, vector<int>());
 
     
     cout << "points1 size: " << points1.size() << ", points2 size: " << points2.size() << ", match size: "<< match.size() << endl;
-    for(int i=0; i<points1.size(); i++){
-      cout << points1.at(i).x << ", " << points1.at(i).y << endl;
+    for(int i=0; i<prevFeatures.size(); i++){
+      cout << prevFeatures.at(i).x << ", " << currFeatures.at(i).y << endl;
     }
     cout << "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n";
     
     Mat dst_img;
     drawMatches(prevImage, key1, currImage, key2, match, dst_img);
     imshow("match", dst_img);
-    
-    if(match.size() <= 5){
+
+
+    if(match.size() <= 5){ // 応急処置
+      lessthan5++;
+      numFrame++;
+      sprintf(filename, "/home/users/imamura/WORK/Git/mono-vo/dataset/contest/run1/view_%08d.png", numFrame);
+      cout << "\nframe: " << numFrame << endl;
+      Mat currImage_c = imread(filename);
+      cvtColor(currImage_c, currImage, COLOR_BGR2GRAY);
+      tie(key1, key2, match) = feature_matching(prevImage, currImage);
+      tie(prevFeatures, currFeatures) = sort_feature(key1, key2, match);
+      // KeyPoint::convert(key1, prevFeatures, vector<int>());
+      // KeyPoint::convert(key2, currFeatures, vector<int>());
+      
+      
       cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n";
       cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n";
       cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n";
       cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n";
       cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$\n";
+      //scaleを2倍に...?
     }
+    
     E = findEssentialMat(currFeatures, prevFeatures, focal, pp, RANSAC, 0.999, 1.0, mask);
     recoverPose(E, currFeatures, prevFeatures, R, t, focal, pp, mask);
     
@@ -135,7 +152,7 @@ int main( int argc, char** argv ){
       currPts.at<double>(1,i) = currFeatures.at(i).y;
     }
     
-    scale = 10.0;
+
     if((scale>0.1)&&(t.at<double>(2) > t.at<double>(0)) && (t.at<double>(2) > t.at<double>(1))){
       t_f = t_f + scale*(R_f*t);
       R_f = R*R_f;
@@ -150,12 +167,12 @@ int main( int argc, char** argv ){
     myfile << t_f.at<double>(0) << " " << t_f.at<double>(1) << " " << t_f.at<double>(2) << endl;
 
     // a redetection is triggered in case the number of feautres being trakced go below a particular threshold
-    if (prevFeatures.size() < MIN_NUM_FEAT){
-      tie(key1, key2, match) = feature_matching(prevImage, currImage);
-      tie(points1, points2) = sort_feature(key1, key2, match);
-      // KeyPoint::convert(key1, prevFeatures, vector<int>());
-      // KeyPoint::convert(key2, currFeatures, vector<int>());
-    }
+    // if (prevFeatures.size() < MIN_NUM_FEAT){
+    //   tie(key1, key2, match) = feature_matching(prevImage, currImage);
+    //   tie(prevFeatures, currFeatures) = sort_feature(key1, key2, match);
+    //   // KeyPoint::convert(key1, prevFeatures, vector<int>());
+    //   // KeyPoint::convert(key2, currFeatures, vector<int>());
+    // }
 
     prevImage = currImage.clone();
     prevFeatures = currFeatures;
@@ -176,9 +193,7 @@ int main( int argc, char** argv ){
   double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
   cout << "Total time taken: " << elapsed_secs << "s" << endl;
   cout << "miss count: " << miss_cnt << endl;
-  
-  //cout << R_f << endl;
-  //cout << t_f << endl;
+  cout << "less than 5 count: " << lessthan5 << endl;
 
   return 0;
 }
